@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # A PyTorch implementation of Advantage weighted Actor-Critic (AWAC)
 
 ## Requirements
@@ -82,3 +83,8 @@ It is confirmed that `AWAC` can learn better policy than its behavior policy in 
 
 - Also confirmed that even we clear the memory right before start to online training,
   the `AWAC` still can learn well.
+=======
+# AWAC_code_practice
+출처: https://github.com/Junyoungpark/Pytorch-AWAC
+위 원본 코드를 사용하였습니다.
+>>>>>>> a9d0cec2fb745783bafafd33d56c2843afcf280d
