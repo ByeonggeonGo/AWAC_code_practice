@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'dart:convert';
+import 'package:search_choices/search_choices.dart';
 
 const String _serverUrl =
     'http://192.168.0.108:51212/offline_train?batch_size=1024&n_updates=500&name_of_trained_model=test3';
@@ -11,6 +12,21 @@ const String _agentlistUrl = 'http://192.168.0.108:51212/check_agent_list';
 
 final pagecontroller = Get.put(pageController());
 final obj = Get.put(learningController());
+var main_bottom_index = 0.obs;
+
+var batch_size_list = [512, 1024, 2048].map((i) {
+  return (DropdownMenuItem(
+    child: Text(i.toString()),
+    value: i.toString(),
+  ));
+}).toList();
+
+var update_num_list = [500, 1000, 2000, 4000, 8000].map((i) {
+  return (DropdownMenuItem(
+    child: Text(i.toString()),
+    value: i.toString(),
+  ));
+}).toList();
 
 class learningController extends GetxController {
   var _result = [].obs;
@@ -20,6 +36,21 @@ class learningController extends GetxController {
   var _maindataAvailable = false.obs;
   var _dbdataAvailable = false.obs;
   var _agentdataAvailable = false.obs;
+
+  var batch_sz = '1024'.obs;
+  var offline_learn_size = '500'.obs;
+  var offline_learn_agent_name = 'agent'.obs;
+  var offline_learn_status = false.obs;
+  // String offline_learn_url =
+  //     "http://192.168.0.108:51212/offline_train?batch_size=${batch_sz.value}&n_updates=${offline_learn_size.value}&name_of_trained_model=${offline_learn_agent_name.value}";
+
+  var batch_sz_online = '1024'.obs;
+  var online_learn_size = '500'.obs;
+  var online_learn_target_agent_name = ''.obs;
+  var online_learn_after_agent_name = ''.obs;
+  var dataset_name = ''.obs;
+  var after_dataset_name = ''.obs;
+  var online_learn_status = false.obs;
 
   @override
   void onInit() {
@@ -36,19 +67,41 @@ class learningController extends GetxController {
   RxList get dbresult => _dbresult;
   RxList get agentresult => _agentresult;
 
-  mainpagedata() async {
-    _maindataAvailable.value = false;
+  offline_learning() async {
+    offline_learn_status.value = false;
+    String offline_learn_url =
+        "http://192.168.0.108:51212/offline_train?batch_size=${batch_sz.value}&n_updates=${offline_learn_size.value}&name_of_trained_model=${offline_learn_agent_name.value}";
+
     await http
         // yield http
         // http
-        .get(Uri.parse(_serverUrl),
+        .get(Uri.parse(offline_learn_url),
             headers: {"Access-Control_Allow_Origin": "*"})
         .then((response) {
-          response.statusCode == 200 ? _result.add(response.body) : null;
+          response.statusCode == 200 ? null : null;
         })
         .catchError((err) => print(err))
         .whenComplete(() {
-          _maindataAvailable.value = true;
+          offline_learn_status.value = true;
+          print("complete");
+        });
+    throw "";
+  }
+
+  online_learning() async {
+    online_learn_status.value = false;
+    String online_learn_url =
+        "http://192.168.0.108:51212/online_train?batch_size=${batch_sz_online.value}&num_runs=${online_learn_size.value}&name_of_target_model=${online_learn_target_agent_name.value}&name_of_updated_model=${online_learn_after_agent_name.value}&name_of_memory=${dataset_name.value}&name_of_updated_memory=${after_dataset_name.value}";
+
+    await http
+        .get(Uri.parse(online_learn_url),
+            headers: {"Access-Control_Allow_Origin": "*"})
+        .then((response) {
+          response.statusCode == 200 ? null : null;
+        })
+        .catchError((err) => print(err))
+        .whenComplete(() {
+          online_learn_status.value = true;
           print("complete");
         });
     throw "";
@@ -158,10 +211,365 @@ class mainplace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Color.fromARGB(255, 34, 145, 67),
-      child: Obx(() => obj._maindataAvailable.value
-          ? Text(jsonDecode(obj.result[0]).toString())
-          : Text("weighting")),
+      color: Color.fromARGB(255, 228, 228, 228),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Flexible(
+            fit: FlexFit.tight,
+            flex: 2,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(2, 8, 0, 0),
+              child: Text(
+                "Controller Management system",
+                style: TextStyle(
+                  color: Color.fromARGB(255, 75, 116, 93),
+                  letterSpacing: 2.0,
+                  fontSize: 16.0,
+                ),
+              ),
+              color: Color.fromARGB(255, 231, 231, 230),
+            ),
+          ),
+          Flexible(
+            fit: FlexFit.tight,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Flexible(
+                  flex: 1,
+                  fit: FlexFit.tight,
+                  child: Column(
+                    children: [
+                      Flexible(
+                        flex: 4,
+                        fit: FlexFit.tight,
+                        child: Container(
+                          // color: Colors.black,
+                          margin: EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                              color: Color.fromARGB(255, 255, 255, 255),
+                              shape: BoxShape.circle),
+                          child: IconButton(
+                            onPressed: (() => main_bottom_index.value = 0),
+                            icon: Icon(Icons.access_alarms_sharp),
+                          ),
+                        ),
+                      ),
+                      Flexible(
+                        flex: 1,
+                        fit: FlexFit.tight,
+                        child: Text("Offline learning"),
+                      )
+                    ],
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  fit: FlexFit.tight,
+                  child: Column(
+                    children: [
+                      Flexible(
+                        flex: 4,
+                        fit: FlexFit.tight,
+                        child: Container(
+                          // color: Colors.black,
+                          margin: EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                              color: Color.fromARGB(255, 255, 255, 255),
+                              shape: BoxShape.circle),
+                          child: IconButton(
+                            onPressed: (() => main_bottom_index.value = 1),
+                            icon: Icon(Icons.access_alarms_sharp),
+                          ),
+                        ),
+                      ),
+                      Flexible(
+                        flex: 1,
+                        fit: FlexFit.tight,
+                        child: Text("Online learning"),
+                      )
+                    ],
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  fit: FlexFit.tight,
+                  child: Column(
+                    children: [
+                      Flexible(
+                        flex: 4,
+                        fit: FlexFit.tight,
+                        child: Container(
+                          // color: Colors.black,
+                          margin: EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                              color: Color.fromARGB(255, 255, 255, 255),
+                              shape: BoxShape.circle),
+                          child: IconButton(
+                            onPressed: (() => main_bottom_index.value = 2),
+                            icon: Icon(Icons.access_alarms_sharp),
+                          ),
+                        ),
+                      ),
+                      Flexible(
+                        flex: 1,
+                        fit: FlexFit.tight,
+                        child: Text("Model hosting"),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            flex: 4,
+          ),
+          Flexible(
+            fit: FlexFit.tight,
+            child: Obx(() => main_bottom_index.value == 0
+                ? OfflinelearnPage()
+                : main_bottom_index.value == 1
+                    ? OnlinelearningPage()
+                    : SizedBox()),
+            flex: 25,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class OnlinelearningPage extends StatelessWidget {
+  const OnlinelearningPage({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Flexible(
+          fit: FlexFit.tight,
+          flex: 4,
+          child: Container(
+            height: 400,
+            margin: EdgeInsets.all(10),
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+            // color: Color.fromARGB(255, 240, 218, 216),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter batch size'),
+                    onSubmitted: (value) {
+                      obj.batch_sz_online.value = value;
+                    },
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter num run'),
+                    onSubmitted: (value) {
+                      obj.online_learn_size.value = value;
+                    },
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter name of target model'),
+                    onSubmitted: (value) {
+                      obj.online_learn_target_agent_name.value = value;
+                    },
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter name of target model after train'),
+                    onSubmitted: (value) {
+                      obj.online_learn_after_agent_name.value = value;
+                    },
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Select dataset'),
+                    onSubmitted: (value) {
+                      obj.dataset_name.value = value;
+                    },
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter dataset name after online train'),
+                    onSubmitted: (value) {
+                      obj.after_dataset_name.value = value;
+                    },
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      obj.online_learning();
+                    },
+                    child: Text("Click to update agent"),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+        Flexible(
+          fit: FlexFit.tight,
+          flex: 1,
+          child: Container(
+            margin: EdgeInsets.all(10),
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Learning Progress'),
+                Obx(() => obj.online_learn_status.value
+                    ? Text("...learning complete...")
+                    : Text('..gogogo..'))
+              ],
+            ),
+            // color: Color.fromARGB(255, 240, 218, 216),
+          ),
+        ),
+        Flexible(
+          fit: FlexFit.tight,
+          flex: 1,
+          child: Container(
+            margin: EdgeInsets.all(10),
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Performance summary'),
+              ],
+            ),
+            // color: Color.fromARGB(255, 240, 218, 216),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class OfflinelearnPage extends StatelessWidget {
+  const OfflinelearnPage({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Flexible(
+          fit: FlexFit.tight,
+          flex: 4,
+          child: Container(
+            height: 300,
+            margin: EdgeInsets.all(10),
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+            // color: Color.fromARGB(255, 240, 218, 216),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter batch size'),
+                    onSubmitted: (value) {
+                      obj.batch_sz.value = value;
+                    },
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter iter number'),
+                    onSubmitted: (value) {
+                      obj.offline_learn_size.value = value;
+                    },
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter your model name for saved'),
+                    onSubmitted: (String value) {
+                      obj.offline_learn_agent_name.value = value;
+                    },
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      obj.offline_learning();
+                    },
+                    child: Text("Click to train agent"),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+        Flexible(
+          fit: FlexFit.tight,
+          flex: 1,
+          child: Container(
+            margin: EdgeInsets.all(10),
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Learning Progress'),
+                Obx(() => obj.offline_learn_status.value
+                    ? Text("...learning complete...")
+                    : Text('.........'))
+              ],
+            ),
+            // color: Color.fromARGB(255, 240, 218, 216),
+          ),
+        ),
+        Flexible(
+          fit: FlexFit.tight,
+          flex: 1,
+          child: Container(
+            margin: EdgeInsets.all(10),
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Performance summary'),
+              ],
+            ),
+            // color: Color.fromARGB(255, 240, 218, 216),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -186,27 +594,20 @@ class Home extends StatelessWidget {
         backgroundColor: Color.fromARGB(255, 255, 255, 255),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Flexible(
-            child: Container(
-              color: Color.fromARGB(255, 255, 255, 255),
-              child: Row(
-                children: [
-                  Flexible(
-                    child: sidebar(),
-                    flex: 1,
-                  ),
-                  Flexible(
-                    child: Obx(() => pagecontroller.controllmainpages()),
-                    flex: 7,
-                  ),
-                ],
-              ),
+      body: Container(
+        color: Color.fromARGB(255, 255, 255, 255),
+        child: Row(
+          children: [
+            Flexible(
+              child: sidebar(),
+              flex: 1,
             ),
-            flex: 8,
-          )
-        ],
+            Flexible(
+              child: Obx(() => pagecontroller.controllmainpages()),
+              flex: 7,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -236,7 +637,7 @@ class sidebar extends StatelessWidget {
                           icon: Icon(Icons.motorcycle),
                           onPressed: () {
                             pagecontroller.pageindex.value = 0;
-                            obj.mainpagedata();
+                            // obj.mainpagedata();
                           },
                         ),
                         Text("MAIN")
