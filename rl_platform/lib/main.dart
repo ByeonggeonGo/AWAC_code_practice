@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'dart:convert';
-import 'package:search_choices/search_choices.dart';
 
-const String _serverUrl =
-    'http://192.168.0.108:51212/offline_train?batch_size=1024&n_updates=500&name_of_trained_model=test3';
 const String _dblistUrl = 'http://192.168.0.108:51212/check_offlinedataset';
 const String _agentlistUrl = 'http://192.168.0.108:51212/check_agent_list';
 
@@ -52,6 +49,8 @@ class learningController extends GetxController {
   var after_dataset_name = ''.obs;
   var online_learn_status = false.obs;
 
+  var learning_progress_num = 0.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -69,32 +68,55 @@ class learningController extends GetxController {
 
   offline_learning() async {
     offline_learn_status.value = false;
-    String offline_learn_url =
+    String offlineLearnUrl =
         "http://192.168.0.108:51212/offline_train?batch_size=${batch_sz.value}&n_updates=${offline_learn_size.value}&name_of_trained_model=${offline_learn_agent_name.value}";
 
-    await http
-        // yield http
-        // http
-        .get(Uri.parse(offline_learn_url),
-            headers: {"Access-Control_Allow_Origin": "*"})
-        .then((response) {
-          response.statusCode == 200 ? null : null;
-        })
-        .catchError((err) => print(err))
-        .whenComplete(() {
-          offline_learn_status.value = true;
-          print("complete");
-        });
-    throw "";
+    // var request =  await http
+    //     // yield http
+    //     // http
+    //     .get(Uri.parse(offlineLearnUrl),
+    //         headers: {"Access-Control_Allow_Origin": "*"})
+    //     .then((response) {
+    //       response.statusCode == 200 ? null : null;
+    //     })
+    //     .catchError((err) => print(err))
+    //     .whenComplete(() {
+    //       offline_learn_status.value = true;
+    //       print("complete");
+    //     });
+
+    var request = http.Request(
+      'GET',
+      Uri.parse(offlineLearnUrl),
+    );
+    var streamedResponse = await request.send();
+    // var response = await http.Response.fromStream(streamedResponse);
+    // await for (var value in streamedResponse) {
+    //   print(value);
+    // }
+    // var responseString = await streamedResponse.stream.bytesToString();
+    // var responseString = streamedResponse.stream.listen(null).onData((data) {
+    //   print(data);
+    // });
+    var dat = [];
+    var responseString = streamedResponse.stream.listen((Value) {
+      dat.add(Value);
+      print(dat.length);
+    });
+
+    // print(responseString);
+    // streamedResponse.stream.listen((var newBytes) {
+    //   // print(newBytes.toString());
+    // });
   }
 
   online_learning() async {
     online_learn_status.value = false;
-    String online_learn_url =
+    String onlineLearnUrl =
         "http://192.168.0.108:51212/online_train?batch_size=${batch_sz_online.value}&num_runs=${online_learn_size.value}&name_of_target_model=${online_learn_target_agent_name.value}&name_of_updated_model=${online_learn_after_agent_name.value}&name_of_memory=${dataset_name.value}&name_of_updated_memory=${after_dataset_name.value}";
 
     await http
-        .get(Uri.parse(online_learn_url),
+        .get(Uri.parse(onlineLearnUrl),
             headers: {"Access-Control_Allow_Origin": "*"})
         .then((response) {
           response.statusCode == 200 ? null : null;
