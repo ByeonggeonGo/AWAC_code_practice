@@ -145,7 +145,7 @@ class learningController extends GetxController {
         .whenComplete(() {
           _dbdataAvailable.value = true;
         });
-    throw "";
+    
   }
 
   getagentlist() async {
@@ -163,7 +163,7 @@ class learningController extends GetxController {
         .whenComplete(() {
           _agentdataAvailable.value = true;
         });
-    throw "";
+    
   }
 }
 
