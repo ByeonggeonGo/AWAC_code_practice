@@ -101,6 +101,7 @@ class learningController extends GetxController {
     var dat = [];
     var responseString = streamedResponse.stream.listen((Value) {
       dat.add(Value);
+      print(utf8.decode(Value));
       print(dat.length);
     });
 
