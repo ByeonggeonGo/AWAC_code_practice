@@ -103,6 +103,7 @@ class learningController extends GetxController {
       dat.add(Value);
       print(utf8.decode(Value));
       print(dat.length);
+      
     });
 
     // print(responseString);
