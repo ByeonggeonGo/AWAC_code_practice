@@ -79,9 +79,9 @@ class AWAC(nn.Module):
                 # 결국  critic의 input으로 actor의 output이 사용되는 방식
                 qs = self.critic_target(state)  # [#. samples x # actions]
                 action_probs = F.softmax(logits, dim=-1)
-                vs = (qs * action_probs).sum(dim=-1, keepdims=True)
+                vs = (qs * action_probs).sum(dim=-1, keepdims=True)   ##이부분 value iteration에서 transit구해서 평균구하는 것과 같은 과정(기댓값구하기)
                 qas = qs.gather(1, action)
-                adv = qas - vs
+                adv = qas - vs ##advantage나타냄 현재 스테이트에 비해 액션을 취했을때 얼마나 좋아지는가
             else:
                 adv = self.critic_target(state).gather(1, action)
 
